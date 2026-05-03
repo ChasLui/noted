@@ -113,8 +113,7 @@ html, body {
 }
 
 #window-controls button,
-#btn-settings,
-#btn-settings-close {
+#btn-settings {
   width: 20px;
   height: 20px;
   border: none;
@@ -131,8 +130,7 @@ html, body {
 }
 
 #window-controls button:hover,
-#btn-settings:hover,
-#btn-settings-close:hover {
+#btn-settings:hover {
   background: color-mix(in srgb, var(--theme-type-main) 10%, transparent);
   color: var(--theme-type-main);
 }
@@ -144,12 +142,17 @@ html, body {
   transform: translateY(-50%);
   opacity: 0;
   pointer-events: none;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
 }
 
 #titlebar:hover #btn-settings,
 #btn-settings.open {
   opacity: 1;
   pointer-events: auto;
+}
+
+#btn-settings:hover {
+  transform: translateY(-50%) scale(1.1);
 }
 
 #btn-settings.open {
@@ -290,10 +293,17 @@ html, body {
 
 #settings-panel {
   flex: 1;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   padding: 32px;
   color: var(--theme-type-main);
   animation: settings-in 0.2s ease-out;
+}
+
+.settings-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 :root[data-settings="open"] #canvas-container,
@@ -307,19 +317,7 @@ html, body {
 }
 
 .settings-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.settings-eyebrow {
-  color: var(--theme-accent-main);
-  font: 700 10px/1.2 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 4px;
+  margin-bottom: 28px;
 }
 
 .settings-header h2 {
@@ -327,45 +325,130 @@ html, body {
   letter-spacing: -0.03em;
 }
 
-#btn-settings-close {
-  font-size: 20px;
-  line-height: 1;
+.settings-section {
+  margin-bottom: 24px;
 }
 
-.settings-label {
-  display: block;
-  margin-bottom: 8px;
+.settings-section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-type-main) 8%, transparent);
+}
+
+.settings-section-title {
   color: var(--theme-type-subtle);
-  font: 600 11px/1 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
-  letter-spacing: 0.04em;
+  font: 700 10px/1 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  flex-shrink: 0;
 }
 
-#theme-select {
-  width: 100%;
+/* ── Custom Theme Dropdown ── */
+
+.theme-dropdown {
+  position: relative;
+}
+
+.theme-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
   border: 1px solid color-mix(in srgb, var(--theme-type-main) 14%, transparent);
-  border-radius: 12px;
-  color: var(--theme-type-main);
+  border-radius: 8px;
   background: color-mix(in srgb, var(--theme-background) 88%, var(--theme-type-reverse) 12%);
-  padding: 10px 12px;
+  color: var(--theme-type-main);
+  font: 500 12px/1.2 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  cursor: pointer;
   outline: none;
-  font: 500 13px/1.2 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  -webkit-app-region: no-drag;
 }
 
-#theme-preview {
-  height: 52px;
-  margin: 12px 0;
-  border-radius: 14px;
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: 1.5fr repeat(4, 1fr);
-  border: 1px solid color-mix(in srgb, var(--theme-type-main) 10%, transparent);
+.theme-dropdown-trigger:hover {
+  border-color: color-mix(in srgb, var(--theme-type-main) 26%, transparent);
 }
 
-#theme-preview span:nth-child(1) { background: var(--theme-background); }
-#theme-preview span:nth-child(2) { background: var(--theme-type-main); }
-#theme-preview span:nth-child(3) { background: var(--theme-accent-main); }
-#theme-preview span:nth-child(4) { background: var(--theme-type-highlight); }
-#theme-preview span:nth-child(5) { background: var(--theme-grid-bold); }
+.theme-dropdown-trigger:focus-visible {
+  border-color: var(--theme-accent-main);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-accent-main) 30%, transparent);
+}
+
+.theme-dropdown-trigger[aria-expanded="true"] {
+  border-color: var(--theme-accent-main);
+}
+
+.theme-dropdown-chevron {
+  flex-shrink: 0;
+  color: var(--theme-type-subtle-plus);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.theme-dropdown-trigger[aria-expanded="true"] .theme-dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+.theme-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 140px;
+  background: var(--theme-background);
+  border: 1px solid color-mix(in srgb, var(--theme-type-main) 14%, transparent);
+  border-radius: 10px;
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.04);
+  padding: 4px;
+  z-index: 50;
+  animation: dropdown-in 0.15s ease-out;
+  transform-origin: top right;
+}
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.theme-dropdown-option {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--theme-type-main);
+  font: 500 12px/1.2 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.theme-dropdown-option:hover {
+  background: color-mix(in srgb, var(--theme-type-main) 7%, transparent);
+}
+
+.theme-dropdown-option:focus-visible {
+  background: color-mix(in srgb, var(--theme-type-main) 7%, transparent);
+}
+
+.theme-dropdown-option[aria-selected="true"] {
+  color: var(--theme-accent-main);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--theme-accent-main) 10%, transparent);
+}
 
 #btn-import-theme {
   width: 100%;
@@ -385,8 +468,29 @@ html, body {
   filter: brightness(1.06);
 }
 
-#theme-status {
-  margin-top: 10px;
+/* ── Update Row ── */
+
+.settings-update-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--theme-type-main) 8%, transparent);
+  margin-top: auto;
+}
+
+.settings-update-label {
+  color: var(--theme-type-main);
+  font: 500 12px/1 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.settings-update-label:hover {
+  color: var(--theme-accent-main);
+}
+
+.settings-update-version {
   color: var(--theme-type-light);
-  font: 500 11px/1.45 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  font: 500 11px/1 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
 }

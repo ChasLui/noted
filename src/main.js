@@ -25,11 +25,48 @@ const container = document.getElementById('canvas-container');
 const indicator = document.getElementById('note-indicator');
 const settingsButton = document.getElementById('btn-settings');
 const settingsPanel = document.getElementById('settings-panel');
-const settingsCloseButton = document.getElementById('btn-settings-close');
-const themeSelect = document.getElementById('theme-select');
+
 const importThemeButton = document.getElementById('btn-import-theme');
 const themeFileInput = document.getElementById('theme-file-input');
-const themeStatus = document.getElementById('theme-status');
+// ── Custom Theme Dropdown ──
+const dropdownTrigger = document.getElementById('theme-dropdown-trigger');
+const dropdownPanel = document.getElementById('theme-dropdown-panel');
+const dropdownLabel = document.getElementById('theme-dropdown-label');
+let dropdownOpen = false;
+
+function closeDropdown() {
+  dropdownOpen = false;
+  dropdownTrigger.setAttribute('aria-expanded', 'false');
+  dropdownPanel.hidden = true;
+}
+
+function toggleDropdown() {
+  dropdownOpen = !dropdownOpen;
+  dropdownTrigger.setAttribute('aria-expanded', String(dropdownOpen));
+  dropdownPanel.hidden = !dropdownOpen;
+}
+
+dropdownTrigger?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleDropdown();
+});
+
+dropdownTrigger?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    toggleDropdown();
+  }
+  if (e.key === 'Escape' && dropdownOpen) {
+    closeDropdown();
+    dropdownTrigger.focus();
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (dropdownOpen && !e.target.closest('.theme-dropdown')) {
+    closeDropdown();
+  }
+});
 
 // ── Theme System (Antinote JSON compatible) ──
 
@@ -42,10 +79,20 @@ async function initThemes() {
 }
 
 function renderThemeSelect() {
-  themeSelect.innerHTML = themes
-    .map((theme) => `<option value="${escapeHtml(theme.name)}">${escapeHtml(theme.name)}</option>`)
+  dropdownLabel.textContent = activeTheme.name;
+  dropdownPanel.innerHTML = themes
+    .map((theme) => `
+      <button class="theme-dropdown-option" role="option" aria-selected="${theme.name === activeTheme.name}" data-value="${escapeHtml(theme.name)}">
+        ${escapeHtml(theme.name)}
+      </button>`)
     .join('');
-  themeSelect.value = activeTheme.name;
+  dropdownPanel.querySelectorAll('.theme-dropdown-option').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setThemeByName(btn.dataset.value);
+      closeDropdown();
+      dropdownTrigger.focus();
+    });
+  });
 }
 
 function setThemeByName(name) {
@@ -55,7 +102,6 @@ function setThemeByName(name) {
   applyTheme(theme);
   setActiveThemeName(theme.name);
   renderThemeSelect();
-  setThemeStatus(`Using ${theme.name}.`);
 }
 
 async function importThemeFile(file) {
@@ -72,9 +118,8 @@ async function importThemeFile(file) {
 
     await saveImportedTheme(imported);
     setThemeByName(imported.name);
-    setThemeStatus(`Imported ${imported.name}. Unsupported Antinote tokens are kept as future stubs.`);
   } catch (error) {
-    setThemeStatus(error.message || 'Could not import theme.');
+    console.error(error);
   } finally {
     themeFileInput.value = '';
   }
@@ -86,10 +131,6 @@ function toggleSettings(forceOpen) {
   settingsPanel.setAttribute('aria-hidden', String(!shouldOpen));
   settingsButton.classList.toggle('open', shouldOpen);
   document.documentElement.dataset.settings = shouldOpen ? 'open' : '';
-}
-
-function setThemeStatus(message) {
-  themeStatus.textContent = message;
 }
 
 function escapeHtml(value) {
@@ -311,8 +352,7 @@ window.addEventListener('DOMContentLoaded', () => {
     e.stopPropagation();
     toggleSettings();
   });
-  settingsCloseButton?.addEventListener('click', () => toggleSettings(false));
-  themeSelect?.addEventListener('change', (e) => setThemeByName(e.target.value));
+
   importThemeButton?.addEventListener('click', () => themeFileInput.click());
   themeFileInput?.addEventListener('change', (e) => {
     const [file] = e.target.files || [];

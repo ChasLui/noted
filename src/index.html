@@ -14,7 +14,11 @@
       <div id="titlebar" data-tauri-drag-region>
         <div id="titlebar-grip"></div>
         <button id="btn-settings" title="Settings" aria-label="Settings">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a8.1 8.1 0 0 0 .05-1l2-1.55-2-3.46-2.42.98a7.8 7.8 0 0 0-1.73-1L15 6.35h-4l-.3 2.62a7.8 7.8 0 0 0-1.73 1L6.55 9l-2 3.46 2 1.55a8.1 8.1 0 0 0 .05 2l-2 1.54 2 3.47 2.4-.98c.54.42 1.12.75 1.74 1l.3 2.61h4l.3-2.62c.62-.24 1.2-.58 1.73-1l2.42.98 2-3.46L19.4 16Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="2" y1="12" x2="14" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
         </button>
         <div id="window-controls">
           <button id="btn-minimize" title="Minimize">
@@ -33,21 +37,31 @@
       </div>
       <div id="note-indicator"></div>
       <aside id="settings-panel" class="hidden" aria-hidden="true">
-        <div class="settings-header">
-          <div>
-            <p class="settings-eyebrow">Antinote compatible</p>
-            <h2>Theme Library</h2>
+        <div class="settings-scroll">
+          <div class="settings-header">
+            <h2>Settings</h2>
           </div>
-          <button id="btn-settings-close" title="Close settings" aria-label="Close settings">×</button>
+          <div class="settings-section">
+            <div class="settings-section-row">
+              <h3 class="settings-section-title">Theme</h3>
+              <div class="theme-dropdown" id="theme-dropdown">
+                <button class="theme-dropdown-trigger" id="theme-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+                  <span id="theme-dropdown-label"></span>
+                  <svg class="theme-dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+                    <path d="M1 1.5L5 5.5L9 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="theme-dropdown-panel" id="theme-dropdown-panel" role="listbox" hidden></div>
+              </div>
+            </div>
+            <button id="btn-import-theme">Import Theme</button>
+            <input id="theme-file-input" type="file" accept=".json,application/json"hidden />
+          </div>
         </div>
-        <label class="settings-label" for="theme-select">Active theme</label>
-        <select id="theme-select"></select>
-        <div id="theme-preview" aria-hidden="true">
-          <span></span><span></span><span></span><span></span><span></span>
+        <div class="settings-update-row">
+          <span class="settings-update-label">Check for Updates</span>
+          <span class="settings-update-version">v0.1.0</span>
         </div>
-        <button id="btn-import-theme">Import Antinote JSON</button>
-        <input id="theme-file-input" type="file" accept=".json,application/json" hidden />
-        <p id="theme-status">Drop in community themes from antinote-extensions or the Antinote Theme Maker.</p>
       </aside>
     </div>
   </body>
