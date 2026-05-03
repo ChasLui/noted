@@ -90,6 +90,7 @@ jobs:
 
       - name: Generate signatures and update manifest
         run: |
+          set -x
           TAG="${GITHUB_REF_NAME}"
           VERSION="${TAG#v}"
           DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -100,15 +101,18 @@ jobs:
           if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
             echo "$TAURI_SIGNING_PRIVATE_KEY" > /tmp/private.key
             chmod 600 /tmp/private.key
+            head -c 20 /tmp/private.key
 
             DEB_FILE=$(ls deb/*.deb 2>/dev/null | head -1)
             if [ -n "$DEB_FILE" ]; then
-              LINUX_SIG=$(npx tauri signer sign -k /tmp/private.key -p '' "$DEB_FILE")
+              LINUX_SIG=$(npx tauri signer sign -k /tmp/private.key "$DEB_FILE" 2>&1)
+              echo "Linux sig: ${LINUX_SIG:0:40}..."
             fi
 
             MSI_FILE=$(ls msi/*.msi 2>/dev/null | head -1)
             if [ -n "$MSI_FILE" ]; then
-              WIN_SIG=$(npx tauri signer sign -k /tmp/private.key -p '' "$MSI_FILE")
+              WIN_SIG=$(npx tauri signer sign -k /tmp/private.key "$MSI_FILE" 2>&1)
+              echo "Windows sig: ${WIN_SIG:0:40}..."
             fi
 
             rm -f /tmp/private.key
