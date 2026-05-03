@@ -94,22 +94,24 @@ jobs:
           VERSION="${TAG#v}"
           DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Generate signatures for each bundle using the private key
           LINUX_SIG=""
           WIN_SIG=""
 
           if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            # Sign the Linux bundles
+            echo "$TAURI_SIGNING_PRIVATE_KEY" > /tmp/private.key
+            chmod 600 /tmp/private.key
+
             DEB_FILE=$(ls deb/*.deb 2>/dev/null | head -1)
             if [ -n "$DEB_FILE" ]; then
-              LINUX_SIG=$(npx tauri signer sign -k <(echo "$TAURI_SIGNING_PRIVATE_KEY") -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$DEB_FILE")
+              LINUX_SIG=$(npx tauri signer sign -k /tmp/private.key -p '' "$DEB_FILE")
             fi
 
-            # Sign the Windows bundle
             MSI_FILE=$(ls msi/*.msi 2>/dev/null | head -1)
             if [ -n "$MSI_FILE" ]; then
-              WIN_SIG=$(npx tauri signer sign -k <(echo "$TAURI_SIGNING_PRIVATE_KEY") -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$MSI_FILE")
+              WIN_SIG=$(npx tauri signer sign -k /tmp/private.key -p '' "$MSI_FILE")
             fi
+
+            rm -f /tmp/private.key
           fi
 
           cat > latest.json << EOF
