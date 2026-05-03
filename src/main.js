@@ -25,7 +25,6 @@ const container = document.getElementById('canvas-container');
 const indicator = document.getElementById('note-indicator');
 const settingsButton = document.getElementById('btn-settings');
 const settingsPanel = document.getElementById('settings-panel');
-const settingsBackdrop = document.getElementById('settings-backdrop');
 const settingsCloseButton = document.getElementById('btn-settings-close');
 const themeSelect = document.getElementById('theme-select');
 const importThemeButton = document.getElementById('btn-import-theme');
@@ -84,9 +83,9 @@ async function importThemeFile(file) {
 function toggleSettings(forceOpen) {
   const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : settingsPanel.classList.contains('hidden');
   settingsPanel.classList.toggle('hidden', !shouldOpen);
-  settingsBackdrop.classList.toggle('hidden', !shouldOpen);
   settingsPanel.setAttribute('aria-hidden', String(!shouldOpen));
   settingsButton.classList.toggle('open', shouldOpen);
+  document.documentElement.dataset.settings = shouldOpen ? 'open' : '';
 }
 
 function setThemeStatus(message) {
@@ -313,7 +312,6 @@ window.addEventListener('DOMContentLoaded', () => {
     toggleSettings();
   });
   settingsCloseButton?.addEventListener('click', () => toggleSettings(false));
-  settingsBackdrop?.addEventListener('click', () => toggleSettings(false));
   themeSelect?.addEventListener('change', (e) => setThemeByName(e.target.value));
   importThemeButton?.addEventListener('click', () => themeFileInput.click());
   themeFileInput?.addEventListener('change', (e) => {

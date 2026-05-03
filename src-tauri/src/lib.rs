@@ -7,7 +7,6 @@ mod db;
 
 #[derive(Clone)]
 struct AppPaths {
-    app_data_dir: PathBuf,
     themes_dir: PathBuf,
 }
 
@@ -42,11 +41,6 @@ fn list_notes(state: tauri::State<'_, db::Database>) -> Result<Vec<db::Note>, St
 }
 
 #[tauri::command]
-fn get_note(id: i64, state: tauri::State<'_, db::Database>) -> Result<db::Note, String> {
-    state.get_note(id)
-}
-
-#[tauri::command]
 fn create_note(state: tauri::State<'_, db::Database>) -> Result<db::Note, String> {
     state.create_note()
 }
@@ -59,11 +53,6 @@ fn save_note(id: i64, content: String, state: tauri::State<'_, db::Database>) ->
 #[tauri::command]
 fn delete_note(id: i64, state: tauri::State<'_, db::Database>) -> Result<(), String> {
     state.delete_note(id)
-}
-
-#[tauri::command]
-fn get_app_data_dir(paths: tauri::State<'_, AppPaths>) -> String {
-    paths.app_data_dir.to_string_lossy().to_string()
 }
 
 #[tauri::command]
@@ -114,18 +103,16 @@ pub fn run() {
             let themes_dir = app_data_dir.join("themes");
             fs::create_dir_all(&themes_dir).expect("failed to create themes dir");
 
-            let database = db::Database::new(app_data_dir.clone()).expect("failed to initialize database");
+            let database = db::Database::new(app_data_dir).expect("failed to initialize database");
             app.manage(database);
-            app.manage(AppPaths { app_data_dir, themes_dir });
+            app.manage(AppPaths { themes_dir });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             list_notes,
-            get_note,
             create_note,
             save_note,
             delete_note,
-            get_app_data_dir,
             list_theme_files,
             save_theme_file
         ])

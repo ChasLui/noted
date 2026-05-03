@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- rounded square bg -->
+  <rect x="0" y="0" width="300" height="300" rx="60" fill="#1a1a2e"/>
+  <!-- note body -->
+  <polygon points="55,55 210,55 210,235 182,263 55,263" fill="#fffde8"/>
+  <!-- fold -->
+  <polygon points="182,263 210,235 182,235" fill="#d4c9a8"/>
+  <polygon points="182,235 210,235 210,241 184,241" fill="#bfb48f" opacity="0.6"/>
+  <!-- ruled lines -->
+  <line x1="75" y1="105" x2="190" y2="105" stroke="#ddd5b5" stroke-width="2"/>
+  <line x1="75" y1="130" x2="190" y2="130" stroke="#ddd5b5" stroke-width="2"/>
+  <line x1="75" y1="155" x2="190" y2="155" stroke="#ddd5b5" stroke-width="2"/>
+  <line x1="75" y1="180" x2="180" y2="180" stroke="#ddd5b5" stroke-width="2"/>
+  <!-- noted text on paper -->
+  <text x="132" y="163" text-anchor="middle" font-family="'Courier New', Courier, monospace" font-size="36px" font-weight="700" fill="#2a2520" letter-spacing="2px">noted</text>
+</svg>

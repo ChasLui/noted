@@ -288,35 +288,22 @@ html, body {
   display: none !important;
 }
 
-#settings-backdrop {
-  position: absolute;
-  inset: 36px 0 0 0;
-  z-index: 8;
-  background: color-mix(in srgb, var(--theme-background) 35%, transparent);
-  backdrop-filter: blur(2px);
+#settings-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  color: var(--theme-type-main);
+  animation: settings-in 0.2s ease-out;
 }
 
-#settings-panel {
-  position: absolute;
-  top: 48px;
-  left: 12px;
-  width: min(304px, calc(100% - 24px));
-  z-index: 9;
-  padding: 16px;
-  border-radius: 18px;
-  background:
-    linear-gradient(145deg,
-      color-mix(in srgb, var(--theme-background) 94%, white 6%),
-      color-mix(in srgb, var(--theme-background-fade) 92%, black 8%));
-  border: 1px solid color-mix(in srgb, var(--theme-type-main) 12%, transparent);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18), inset 0 1px 0 color-mix(in srgb, white 35%, transparent);
-  color: var(--theme-type-main);
-  animation: settings-in 0.18s ease-out;
+:root[data-settings="open"] #canvas-container,
+:root[data-settings="open"] #note-indicator {
+  display: none;
 }
 
 @keyframes settings-in {
-  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .settings-header {
@@ -324,7 +311,7 @@ html, body {
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
 }
 
 .settings-eyebrow {
