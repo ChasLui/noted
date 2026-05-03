@@ -1,4 +1,6 @@
 const { invoke } = window.__TAURI__.core;
+const { getCurrentWindow } = window.__TAURI__.window;
+const appWindow = getCurrentWindow();
 
 const canvas = document.getElementById('note-canvas');
 let saveTimeout = null;
@@ -22,7 +24,7 @@ function scheduleSave() {
     } catch (err) {
       console.error('Failed to save note:', err);
     }
-  }, 300); // saves 300ms after you stop typing
+  }, 300);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -30,4 +32,18 @@ window.addEventListener('DOMContentLoaded', () => {
   canvas.focus();
 
   canvas.addEventListener('input', scheduleSave);
+
+  // Window controls — stopPropagation prevents drag region from swallowing clicks
+  document.getElementById('btn-minimize')?.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+    appWindow.minimize();
+  });
+  document.getElementById('btn-maximize')?.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+    appWindow.toggleMaximize();
+  });
+  document.getElementById('btn-close')?.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+    appWindow.close();
+  });
 });
