@@ -5,10 +5,6 @@ on:
     tags:
       - "v*"
 
-env:
-  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-
 jobs:
   build-linux:
     name: Linux (.deb, .AppImage, .rpm)
@@ -53,13 +49,6 @@ jobs:
           name: rpm
           path: src-tauri/target/release/bundle/rpm/*.rpm
 
-      - name: Upload sig files
-        uses: actions/upload-artifact@v4
-        with:
-          name: sig-linux
-          path: src-tauri/target/release/bundle/**/*.sig
-          if-no-files-found: ignore
-
   build-windows:
     name: Windows (.msi)
     runs-on: windows-latest
@@ -83,19 +72,15 @@ jobs:
           name: msi
           path: src-tauri/target/release/bundle/msi/*.msi
 
-      - name: Upload sig files
-        uses: actions/upload-artifact@v4
-        with:
-          name: sig-windows
-          path: src-tauri/target/release/bundle/**/*.sig
-          if-no-files-found: ignore
-
   release:
     name: Attach to Release
     needs: [build-linux, build-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -103,14 +88,29 @@ jobs:
 
       - uses: actions/download-artifact@v4
 
-      - name: Generate update manifest
+      - name: Generate signatures and update manifest
         run: |
           TAG="${GITHUB_REF_NAME}"
           VERSION="${TAG#v}"
           DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          LINUX_SIG="$(cat sig-linux/*.deb.sig 2>/dev/null || cat sig-linux/*.AppImage.sig 2>/dev/null || echo '')"
-          WIN_SIG="$(cat sig-windows/*.msi.sig 2>/dev/null || echo '')"
+          # Generate signatures for each bundle using the private key
+          LINUX_SIG=""
+          WIN_SIG=""
+
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            # Sign the Linux bundles
+            DEB_FILE=$(ls deb/*.deb 2>/dev/null | head -1)
+            if [ -n "$DEB_FILE" ]; then
+              LINUX_SIG=$(npx tauri signer sign -k <(echo "$TAURI_SIGNING_PRIVATE_KEY") -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$DEB_FILE")
+            fi
+
+            # Sign the Windows bundle
+            MSI_FILE=$(ls msi/*.msi 2>/dev/null | head -1)
+            if [ -n "$MSI_FILE" ]; then
+              WIN_SIG=$(npx tauri signer sign -k <(echo "$TAURI_SIGNING_PRIVATE_KEY") -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$MSI_FILE")
+            fi
+          fi
 
           cat > latest.json << EOF
           {
@@ -129,6 +129,8 @@ jobs:
             }
           }
           EOF
+          echo "Generated latest.json:"
+          cat latest.json
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
@@ -145,7 +147,6 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          # stash the generated manifest before switching branches
           cp latest.json /tmp/latest.json
           git fetch origin main
           git checkout main
