@@ -115,6 +115,10 @@ export function validateAntinoteTheme(value) {
     throw new Error('Theme is missing a string "name" field.');
   }
 
+  if (value.name.length > 100) {
+    throw new Error('Theme name exceeds maximum length of 100 characters.');
+  }
+
   const theme = { ...DEFAULT_THEMES[0], ...value };
   theme.gridEnabled = typeof value.gridEnabled === 'boolean'
     ? value.gridEnabled

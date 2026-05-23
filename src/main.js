@@ -191,11 +191,13 @@ function toggleSettings(forceOpen) {
 }
 
 function escapeHtml(value) {
-  return String(value).replace(/[&<>"]/g, (char) => ({
+  return String(value).replace(/[&<>"'`]/g, (char) => ({
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
-    '"': '&quot;'
+    '"': '&quot;',
+    "'": '&#39;',
+    '`': '&#x60;'
   }[char]));
 }
 
