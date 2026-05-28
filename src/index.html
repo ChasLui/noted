@@ -10,6 +10,12 @@
   </head>
 
   <body>
+    <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
+      <filter id="noted-liquid-glass" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feImage id="noted-liquid-glass-map" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="map" />
+        <feDisplacementMap id="noted-liquid-glass-displacement" in="SourceGraphic" in2="map" scale="16" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
     <div id="window">
       <div id="titlebar" data-tauri-drag-region>
         <div id="titlebar-grip"></div>

@@ -56,6 +56,14 @@
   --shadow-status: 0 6px 18px rgba(0, 0, 0, 0.12);
   --shadow-key: 0 1.5px 0 var(--surface-hover), 0 0 0 0.5px color-mix(in srgb, var(--theme-type-reverse) 30%, transparent) inset;
 
+  --glass-edge: rgba(255, 255, 255, 0.72);
+  --glass-rim: rgba(255, 255, 255, 0.36);
+  --glass-depth: rgba(2, 8, 14, 0.20);
+  --glass-tint-cool: rgba(157, 231, 255, 0.10);
+  --glass-tint-warm: rgba(255, 255, 255, 0.10);
+  --glass-shadow: 0 18px 48px rgba(0, 0, 0, 0.24), 0 4px 16px rgba(0, 0, 0, 0.16);
+  --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.54), inset 0 -1px 0 rgba(255, 255, 255, 0.16);
+
   --editor-left-padding: 32px;
   --editor-top-padding: 10px;
   --editor-line-height: 19px;
@@ -75,6 +83,13 @@ html, body {
   background: transparent;
 }
 
+.liquid-glass-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
 #window {
   width: 100%;
   height: 100%;
@@ -84,10 +99,76 @@ html, body {
   box-shadow: var(--shadow-window);
   display: flex;
   flex-direction: column;
+  isolation: isolate;
+  position: relative;
 }
 
 :root[data-translucent="on"] #window {
   backdrop-filter: blur(24px) saturate(1.35);
+}
+
+#window > * {
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-glass="on"] {
+  --surface-app: transparent;
+  --surface-raised: rgba(255, 255, 255, 0.08);
+  --surface-raised-hover: rgba(255, 255, 255, 0.14);
+  --surface-subtle: rgba(255, 255, 255, 0.06);
+  --surface-hover: rgba(255, 255, 255, 0.10);
+  --surface-active: rgba(157, 231, 255, 0.16);
+  --surface-status: rgba(4, 12, 18, 0.18);
+  --surface-code: rgba(255, 255, 255, 0.10);
+  --surface-titlebar-hover: rgba(255, 255, 255, 0.08);
+  --surface-grip: rgba(157, 231, 255, 0.42);
+  --surface-key: rgba(255, 255, 255, 0.12);
+  --surface-scrollbar: rgba(255, 255, 255, 0.14);
+  --surface-scrollbar-hover: rgba(157, 231, 255, 0.34);
+  --border-faint: rgba(255, 255, 255, 0.14);
+  --border-muted: rgba(255, 255, 255, 0.22);
+  --border-control: rgba(255, 255, 255, 0.28);
+  --border-hover: rgba(157, 231, 255, 0.30);
+  --border-strong: rgba(157, 231, 255, 0.42);
+  --focus-ring: rgba(157, 231, 255, 0.25);
+  --highlight-raised: rgba(255, 255, 255, 0.32);
+  --shadow-window: var(--glass-shadow);
+  --shadow-popover: 0 18px 42px rgba(31, 70, 101, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.18);
+  --shadow-status: 0 12px 26px rgba(31, 70, 101, 0.16);
+  --shadow-key: 0 1px 0 rgba(42, 96, 133, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+:root[data-glass="on"] #window {
+  background:
+    linear-gradient(130deg, rgba(255, 255, 255, 0.10), rgba(157, 231, 255, 0.04) 42%, rgba(255, 255, 255, 0.03)),
+    var(--theme-background);
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  box-shadow: var(--shadow-window), var(--glass-inset);
+  backdrop-filter: url("#noted-liquid-glass") blur(0.2px) saturate(1.18) contrast(1.03);
+  -webkit-backdrop-filter: url("#noted-liquid-glass") blur(0.2px) saturate(1.18) contrast(1.03);
+}
+
+:root[data-glass="on"] #window::before,
+:root[data-glass="on"] #window::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+:root[data-glass="on"] #window::before {
+  inset: 0;
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.64), transparent 16%, transparent 76%, rgba(255, 255, 255, 0.24)),
+    radial-gradient(ellipse at 23% 0%, rgba(255, 255, 255, 0.42), transparent 34%),
+    radial-gradient(ellipse at 92% 100%, rgba(157, 231, 255, 0.22), transparent 32%);
+  mix-blend-mode: screen;
+  opacity: 0.72;
+}
+
+:root[data-glass="on"] #window::after {
+  display: none;
 }
 
 :root[data-grid="on"] #window {
@@ -95,6 +176,14 @@ html, body {
     radial-gradient(circle, var(--grid-dot) 1.5px, transparent 1.5px);
   background-size: var(--grid-column-width) var(--editor-line-height);
   background-position: var(--editor-left-padding) calc(36px + var(--editor-top-padding) - 4px);
+}
+
+:root[data-glass="on"][data-grid="on"] #window {
+  background-image:
+    linear-gradient(130deg, rgba(255, 255, 255, 0.10), rgba(157, 231, 255, 0.04) 42%, rgba(255, 255, 255, 0.03)),
+    var(--theme-background);
+  background-size: auto;
+  background-position: center;
 }
 
 /* ── Titlebar ── */
@@ -211,7 +300,13 @@ html, body {
   position: relative;
 }
 
+:root[data-glass="on"] #canvas-container::before {
+  display: none;
+}
+
 #note-canvas {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   border: none;
@@ -232,6 +327,12 @@ html, body {
   scrollbar-color: var(--highlight-selection) transparent;
   scrollbar-width: thin;
   transition: opacity 0.15s ease, transform 0.2s ease;
+}
+
+:root[data-glass="on"] #note-canvas {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.72),
+    0 0 14px rgba(0, 0, 0, 0.28);
 }
 
 #note-canvas::selection {
@@ -371,6 +472,22 @@ html, body {
   animation: settings-in 0.2s ease-out;
 }
 
+:root[data-glass="on"] #settings-panel {
+  margin: 10px;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.10), rgba(157, 231, 255, 0.05)),
+    rgba(5, 14, 20, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 -1px 0 rgba(47, 136, 197, 0.12),
+    0 18px 40px rgba(31, 70, 101, 0.12);
+  backdrop-filter: blur(0.4px) saturate(1.12);
+  -webkit-backdrop-filter: blur(0.4px) saturate(1.12);
+}
+
 .settings-scroll {
   flex: 1;
   overflow-y: auto;
@@ -442,6 +559,20 @@ html, body {
   -webkit-app-region: no-drag;
 }
 
+:root[data-glass="on"] .theme-dropdown-trigger,
+:root[data-glass="on"] .shortcut-key,
+:root[data-glass="on"] .shortcut-steps kbd,
+:root[data-glass="on"] #app-status {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.10), rgba(157, 231, 255, 0.05));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    0 8px 22px rgba(0, 0, 0, 0.10);
+  backdrop-filter: blur(0.3px) saturate(1.08);
+  -webkit-backdrop-filter: blur(0.3px) saturate(1.08);
+}
+
 .theme-dropdown-trigger:hover {
   border-color: var(--border-strong);
   background: var(--surface-raised-hover);
@@ -489,6 +620,16 @@ html, body {
   z-index: 50;
   animation: dropdown-in 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top right;
+}
+
+:root[data-glass="on"] .theme-dropdown-panel {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(157, 231, 255, 0.06)),
+    rgba(5, 14, 20, 0.18);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: var(--shadow-popover), inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(0.4px) saturate(1.12);
+  -webkit-backdrop-filter: blur(0.4px) saturate(1.12);
 }
 
 .theme-dropdown-panel::-webkit-scrollbar {
@@ -645,6 +786,35 @@ html, body {
   letter-spacing: 0.03em;
   transition: transform 0.15s ease, filter 0.15s ease;
   flex-shrink: 0;
+}
+
+:root[data-glass="on"] #btn-import-theme {
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background:
+    linear-gradient(135deg, rgba(157, 231, 255, 0.86), rgba(99, 199, 242, 0.56)),
+    radial-gradient(circle at 35% 0%, rgba(255, 255, 255, 0.44), transparent 38%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.48),
+    0 10px 26px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-glass="on"] #window-controls button:hover,
+:root[data-glass="on"] #btn-settings:hover,
+:root[data-glass="on"] #btn-settings.open {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    0 6px 16px rgba(0, 0, 0, 0.14);
+  backdrop-filter: blur(0.3px) saturate(1.08);
+  -webkit-backdrop-filter: blur(0.3px) saturate(1.08);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root[data-glass="on"] #window,
+  :root[data-glass="on"] #settings-panel,
+  :root[data-glass="on"] .theme-dropdown-panel,
+  :root[data-glass="on"] .theme-dropdown-trigger {
+    background-color: rgba(5, 14, 20, 0.32);
+  }
 }
 
 #btn-import-theme:hover {
