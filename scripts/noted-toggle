@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v gdbus >/dev/null 2>&1; then
+  if gdbus call \
+    --session \
+    --dest com.khurram.noted.SingleInstance \
+    --object-path /com/khurram/noted/SingleInstance \
+    --method org.SingleInstance.DBus.ExecuteCallback \
+    "['noted-toggle', '--toggle']" \
+    "${PWD}" >/dev/null 2>&1; then
+    exit 0
+  fi
+fi
+
+exec noted

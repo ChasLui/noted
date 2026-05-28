@@ -211,16 +211,26 @@ pub fn run() {
 
     #[cfg(desktop)]
     {
-        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            if let Some(window) = app.get_webview_window("main") {
-                if window.is_visible().unwrap_or(false) {
-                    let _ = window.hide();
-                } else {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
-            }
-        }));
+        builder = builder.plugin(
+            tauri_plugin_single_instance::Builder::new()
+                .dbus_id("com.khurram.noted")
+                .callback(|app, args, _cwd| {
+                    if let Some(window) = app.get_webview_window("main") {
+                        if args.iter().any(|arg| arg == "--toggle") {
+                            if window.is_visible().unwrap_or(false) {
+                                let _ = window.hide();
+                            } else {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        } else {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(),
+        );
     }
 
     builder

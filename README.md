@@ -16,6 +16,22 @@ A minimal, distraction-free note-taking app built with [Tauri](https://v2.tauri.
 - Custom themes compatible with Antinote JSON format
 - Lightweight — a single native window, no bloat
 
+## Roadmap
+
+- [x] Swipe Navigation
+- [x] Plain Text
+- [x] Global Hotkey
+- [ ] Link Shrink
+- [ ] Contextual Math
+- [ ] Conversions
+- [ ] Reactive Variables
+- [ ] Checklists
+- [ ] Timer
+- [ ] Screenshot to Text
+- [ ] AutoPaste
+- [ ] One-Click Export
+
+
 ## Navigation
 
 Swipe left or right with two fingers on the trackpad to move between notes. The active note indicator at the bottom shows your position in the stack.
@@ -27,8 +43,13 @@ Press **Super+N** to toggle the window from anywhere.
 1. Open **Settings → Keyboard → Custom Shortcuts**
 2. Click **+ Add Shortcut**
 3. Set **Name** to `Noted Toggle`
-4. Set **Command** to `noted`
+4. Set **Command** to `noted-toggle`
 5. Set **Shortcut** to **Super+N**
+
+Installed Linux packages include `noted-toggle`, a small DBus toggle script
+that talks to Noted's single-instance service. This works on Wayland because
+the desktop environment owns the global shortcut and the script only asks the
+running app to show or hide its window.
 
 ## Install
 

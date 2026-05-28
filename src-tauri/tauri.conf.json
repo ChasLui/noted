@@ -36,6 +36,18 @@
     "active": true,
     "createUpdaterArtifacts": true,
     "targets": "all",
+    "linux": {
+      "deb": {
+        "files": {
+          "/usr/bin/noted-toggle": "scripts/noted-toggle"
+        }
+      },
+      "rpm": {
+        "files": {
+          "/usr/bin/noted-toggle": "scripts/noted-toggle"
+        }
+      }
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
