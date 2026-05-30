@@ -5,12 +5,10 @@ export function createUpdaterUi({
   Channel
 }) {
   let updateAvailable = null;
-  const currentVersion = '0.1.9';
+  let currentVersion = null;
 
   function bind() {
-    if (updateVersion) {
-      updateVersion.textContent = `v${currentVersion}`;
-    }
+    refreshCurrentVersion();
 
     updateBtn?.addEventListener('click', async () => {
       if (updateAvailable) {
@@ -37,13 +35,16 @@ export function createUpdaterUi({
 
   async function checkForUpdates() {
     try {
+      const displayVersion = currentVersion || await refreshCurrentVersion();
       const metadata = await invoke('plugin:updater|check');
 
       if (metadata) {
         updateAvailable = metadata;
         updateBtn.textContent = 'Install Update';
         updateBtn.classList.add('install');
-        updateVersion.textContent = metadata.version ? `v${metadata.version}` : `v${currentVersion}`;
+        if (updateVersion) {
+          updateVersion.textContent = metadata.version ? `v${metadata.version}` : `v${displayVersion}`;
+        }
       } else {
         updateAvailable = null;
         updateBtn.textContent = 'Up to date';
@@ -62,6 +63,18 @@ export function createUpdaterUi({
         updateBtn.textContent = 'Check for Updates';
         updateBtn.disabled = false;
       }, 3000);
+    }
+  }
+
+  async function refreshCurrentVersion() {
+    try {
+      currentVersion = await invoke('get_app_version');
+      if (updateVersion) updateVersion.textContent = `v${currentVersion}`;
+      return currentVersion;
+    } catch (err) {
+      console.error('Could not read app version:', err);
+      if (updateVersion && !updateVersion.textContent) updateVersion.textContent = 'v?';
+      return currentVersion || '?';
     }
   }
 

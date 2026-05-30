@@ -148,6 +148,11 @@ fn delete_note(id: i64, state: tauri::State<'_, db::Database>) -> Result<(), Str
 }
 
 #[tauri::command]
+fn get_app_version(app: tauri::AppHandle) -> String {
+    app.package_info().version.to_string()
+}
+
+#[tauri::command]
 fn list_theme_files(paths: tauri::State<'_, AppPaths>) -> Result<Vec<ThemeFile>, String> {
     fs::create_dir_all(&paths.themes_dir).map_err(|e| e.to_string())?;
 
@@ -382,6 +387,7 @@ pub fn run() {
             create_note,
             save_note,
             delete_note,
+            get_app_version,
             list_theme_files,
             save_theme_file,
             quit_app,

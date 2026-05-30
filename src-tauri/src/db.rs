@@ -112,11 +112,15 @@ impl Database {
 
     pub fn save_note(&self, id: i64, content: &str) -> Result<(), String> {
         let conn = self.conn.lock().map_err(|e| e.to_string())?;
-        conn.execute(
-            "UPDATE notes SET content = ?1, updated_at = CURRENT_TIMESTAMP WHERE id = ?2",
-            rusqlite::params![content, id],
-        )
-        .map_err(|e| e.to_string())?;
+        let updated = conn
+            .execute(
+                "UPDATE notes SET content = ?1, updated_at = CURRENT_TIMESTAMP WHERE id = ?2",
+                rusqlite::params![content, id],
+            )
+            .map_err(|e| e.to_string())?;
+        if updated == 0 {
+            return Err(format!("Note {id} does not exist."));
+        }
         Ok(())
     }
 
@@ -239,6 +243,19 @@ mod tests {
         assert_eq!(notes[0].content, "middle");
         assert_eq!(notes[1].id, third.id);
         assert_eq!(notes[1].position, 1);
+
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn save_missing_note_returns_error() {
+        let dir = temp_app_data_dir("missing-save");
+        let db = Database::new(dir.clone()).expect("database should initialize");
+
+        let error = db
+            .save_note(999_999, "missing")
+            .expect_err("saving a missing note should fail");
+        assert!(error.contains("does not exist"));
 
         let _ = fs::remove_dir_all(dir);
     }

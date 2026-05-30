@@ -6,6 +6,16 @@ const MAX_DISPLAY = 28;
 
 const expandLinkEffect = StateEffect.define();
 
+function createShrunkLinkState(state, expanded = new Map()) {
+  const map = new Map();
+  for (const { from, to, url } of findUrlsInText(state.doc.toString(), 0)) {
+    const expandedLink = expanded.get(from);
+    if (expandedLink?.to === to && expandedLink.url === url) continue;
+    map.set(from, { to, url });
+  }
+  return { links: map, expanded };
+}
+
 function truncateUrl(url) {
   let display = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
   const cleaned = display.split('?')[0].split('#')[0];
@@ -93,16 +103,7 @@ class ShrunkLinkWidget extends WidgetType {
           effects: expandLinkEffect.of(pos)
         });
       } else {
-        try {
-          const opener = window.__TAURI__?.opener;
-          if (opener?.openUrl) {
-            opener.openUrl(this.url);
-          } else {
-            window.open(this.url, '_blank');
-          }
-        } catch {
-          window.open(this.url, '_blank');
-        }
+        openExternalUrl(this.url);
       }
     });
 
@@ -114,64 +115,65 @@ class ShrunkLinkWidget extends WidgetType {
   }
 }
 
+function openExternalUrl(url) {
+  try {
+    const opener = window.__TAURI__?.opener;
+    if (opener?.openUrl) {
+      Promise.resolve(opener.openUrl(url)).catch(() => {
+        window.open(url, '_blank');
+      });
+    } else {
+      window.open(url, '_blank');
+    }
+  } catch {
+    window.open(url, '_blank');
+  }
+}
+
 const shrunkLinksField = StateField.define({
   create(state) {
-    const map = new Map();
-    for (const { from, to, url } of findUrlsInText(state.doc.toString(), 0)) {
-      map.set(from, { to, url });
-    }
-    return map;
+    return createShrunkLinkState(state);
   },
 
-  update(shrunk, transaction) {
+  update(value, transaction) {
     for (const effect of transaction.effects) {
       if (effect.is(expandLinkEffect)) {
         const pos = effect.value;
-        for (const [from, info] of shrunk) {
+        for (const [from, info] of value.links) {
           if (from <= pos && info.to >= pos) {
-            const next = new Map(shrunk);
-            next.delete(from);
-            return next;
+            const links = new Map(value.links);
+            const expanded = new Map(value.expanded);
+            links.delete(from);
+            expanded.set(from, info);
+            return { links, expanded };
           }
         }
-        return shrunk;
+        return value;
       }
     }
 
-    if (!transaction.docChanged) return shrunk;
+    if (!transaction.docChanged) return value;
 
-    const next = new Map();
-
-    for (const [oldFrom, { to: oldTo, url }] of shrunk) {
+    const expanded = new Map();
+    for (const [oldFrom, { to: oldTo, url }] of value.expanded) {
       let overlaps = false;
       transaction.changes.iterChanges((fromA, toA) => {
         if (oldFrom < toA && oldTo > fromA) overlaps = true;
       });
       if (!overlaps) {
-        next.set(
+        expanded.set(
           transaction.changes.mapPos(oldFrom, 1),
           { to: transaction.changes.mapPos(oldTo, -1), url }
         );
       }
     }
 
-    transaction.changes.iterChanges((_a, _b, fromB, _c, inserted) => {
-      if (inserted.length === 0) return;
-      for (const { from, to, url } of findUrlsInText(inserted.toString(), fromB)) {
-        let covered = false;
-        for (const [rf, { to: rt }] of next) {
-          if (rf <= from && rt >= to) { covered = true; break; }
-        }
-        if (!covered) next.set(from, { to, url });
-      }
-    });
-
-    return next;
+    return createShrunkLinkState(transaction.state, expanded);
   },
 
   provide(field) {
     return EditorView.decorations.compute([field], (state) => {
-      const shrunk = state.field(field);
+      const shrunk = state.field(field).links;
       const decos = [];
       for (const [from, { to, url }] of shrunk) {
         decos.push(Decoration.replace({

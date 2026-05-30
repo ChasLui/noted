@@ -21,7 +21,7 @@ A minimal, distraction-free note-taking app built with [Tauri](https://v2.tauri.
 - [x] Swipe Navigation
 - [x] Plain Text
 - [x] Global Hotkey
-- [ ] Link Shrink
+- [x] Link Shrink
 - [ ] Contextual Math
 - [ ] Conversions
 - [ ] Reactive Variables
