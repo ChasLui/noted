@@ -1,93 +1,220 @@
-name: release
+name: Build and Release
 
 on:
   push:
     tags:
-      - 'v*'
-
-permissions:
-  contents: write
-
-concurrency:
-  group: release-${{ github.ref_name }}
-  cancel-in-progress: false
+      - "v*"
 
 jobs:
   validate:
-    runs-on: ubuntu-22.04
+    name: Validate release metadata
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: npm
+          node-version: 22
 
-      - run: npm ci
+      - run: npm install
 
-      - name: Validate tag and release metadata
+      - name: Validate source versions
         run: npm run validate:release -- --version="${GITHUB_REF_NAME}"
 
-  publish-tauri:
+  build-linux:
+    name: Linux (.deb, .AppImage, .rpm)
     needs: validate
-    permissions:
-      contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: ubuntu-22.04
-            args: ''
-          - platform: windows-latest
-            args: ''
-    runs-on: ${{ matrix.platform }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: npm
+          node-version: 22
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-22.04'
+      - name: Install system deps
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential \
-            curl \
-            file \
-            libayatana-appindicator3-dev \
-            libfuse2 \
-            libgtk-3-dev \
-            libssl-dev \
-            libwebkit2gtk-4.1-dev \
-            librsvg2-dev \
-            patchelf \
-            wget
+            libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libssl-dev libgtk-3-dev libayatana-appindicator3-dev \
+            librsvg2-dev libfuse2 patchelf
 
-      - run: npm ci
+      - run: npm install
 
-      - uses: tauri-apps/tauri-action@v0.6.2
+      - name: Build
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Noted ${{ github.ref_name }}'
-          releaseBody: |
-            Noted ${{ github.ref_name }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+        run: npx tauri build
 
-            Changes:
-            - Fix close/quit behavior after flushing pending note saves.
-            - Improve Linux DBus toggle command fallback.
-            - Add guarded GNOME/XFCE shortcut registration.
-            - Bump app metadata to ${{ github.ref_name }}.
-          releaseDraft: false
-          prerelease: false
-          generateReleaseNotes: true
-          includeUpdaterJson: true
-          args: ${{ matrix.args }}
+      - name: Upload deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb
+          path: |
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/deb/*.sig
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: appimage
+          path: |
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/appimage/*.sig
+
+      - name: Upload rpm
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm
+          path: |
+            src-tauri/target/release/bundle/rpm/*.rpm
+            src-tauri/target/release/bundle/rpm/*.sig
+
+  build-windows:
+    name: Windows (.msi)
+    needs: validate
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - run: npm install
+
+      - name: Build
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+        run: npx tauri build
+
+      - name: Upload msi
+        uses: actions/upload-artifact@v4
+        with:
+          name: msi
+          path: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/msi/*.sig
+
+  release:
+    name: Attach to Release
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install
+
+      - uses: actions/download-artifact@v4
+
+      - name: Generate updater manifest from signed artifacts
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          DEB_FILE=$(find deb -name '*.deb' 2>/dev/null | head -1)
+          MSI_FILE=$(find msi -name '*.msi' 2>/dev/null | head -1)
+
+          if [ -z "$DEB_FILE" ]; then
+            echo "Missing Linux .deb artifact" >&2
+            exit 1
+          fi
+          if [ -z "$MSI_FILE" ]; then
+            echo "Missing Windows .msi artifact" >&2
+            exit 1
+          fi
+
+          DEB_BASENAME=$(basename "$DEB_FILE")
+          MSI_BASENAME=$(basename "$MSI_FILE")
+
+          case "$DEB_BASENAME" in
+            *"$VERSION"*) ;;
+            *) echo "Linux artifact ${DEB_BASENAME} does not match tag ${TAG}" >&2; exit 1 ;;
+          esac
+          case "$MSI_BASENAME" in
+            *"$VERSION"*) ;;
+            *) echo "Windows artifact ${MSI_BASENAME} does not match tag ${TAG}" >&2; exit 1 ;;
+          esac
+
+          LINUX_SIG_FILE="${DEB_FILE}.sig"
+          WIN_SIG_FILE="${MSI_FILE}.sig"
+
+          if [ ! -f "$LINUX_SIG_FILE" ]; then
+            echo "Missing Linux updater signature: ${LINUX_SIG_FILE}" >&2
+            exit 1
+          fi
+          if [ ! -f "$WIN_SIG_FILE" ]; then
+            echo "Missing Windows updater signature: ${WIN_SIG_FILE}" >&2
+            exit 1
+          fi
+
+          LINUX_SIG=$(cat "$LINUX_SIG_FILE")
+          WIN_SIG=$(cat "$WIN_SIG_FILE")
+
+          cat > latest.json << EOF
+          {
+            "version": "${VERSION}",
+            "notes": "See the release notes for details.",
+            "pub_date": "${DATE}",
+            "platforms": {
+              "linux-x86_64": {
+                "signature": "${LINUX_SIG}",
+                "url": "https://github.com/khurrambhutto/noted/releases/download/${TAG}/${DEB_BASENAME}"
+              },
+              "windows-x86_64": {
+                "signature": "${WIN_SIG}",
+                "url": "https://github.com/khurrambhutto/noted/releases/download/${TAG}/${MSI_BASENAME}"
+              }
+            }
+          }
+          EOF
+
+          npm run validate:release -- --version="${TAG}"
+          echo "Generated latest.json:"
+          cat latest.json
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            deb/*.deb
+            deb/*.sig
+            appimage/*.AppImage
+            appimage/*.sig
+            rpm/*.rpm
+            rpm/*.sig
+            msi/*.msi
+            msi/*.sig
+            latest.json
+          generate_release_notes: true
+
+      - name: Commit latest.json back to repo
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git remote set-url origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          cp latest.json /tmp/latest.json
+          git fetch origin main
+          git checkout main
+          cp /tmp/latest.json latest.json
+          git add latest.json
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update latest.json for ${GITHUB_REF_NAME} [skip ci]"
+          git push origin main
