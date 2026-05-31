@@ -37,3 +37,5 @@ vendor/
 # Local imported Antinote themes / test files
 *.theme.json
 monokai.json
+
+noted_demo.mp4
