@@ -105,37 +105,6 @@ export const DEFAULT_THEMES = [
     gridClear: '#00000000',
     gridBold: '#00000000',
     gridEnabled: false
-  },
-  {
-    name: 'Noted Glass',
-    isDarkTheme: true,
-    background: '#0B182026',
-    backgroundFade: '#FFFFFF12',
-    typeMain: '#F7FBFF',
-    typeSubtle: '#D7E2EA',
-    typeSubtlePlus: '#AEE7FF',
-    typeHighlight: '#7DD6FF33',
-    typeLight: '#B7C7D3',
-    typeSuperlight: '#FFFFFF30',
-    typeHyperLight: '#FFFFFF14',
-    typeReverse: '#07121A',
-    accent1Main: '#9DE7FF',
-    accent1Secondary: '#63C7F2',
-    accent1Tertiary: '#2F8FBE',
-    accent2Main: '#D7C6FF',
-    accent2Secondary: '#A68EF0',
-    accent3Main: '#A8F0D5',
-    accent3Secondary: '#62C5A4',
-    accent4Main: '#FFE0A3',
-    accent4Secondary: '#D9A85C',
-    accent5Main: '#FF9AAE',
-    accent5Secondary: '#D7667A',
-    gridSuperlight: '#00000000',
-    gridClear: '#00000000',
-    gridBold: '#00000000',
-    gridEnabled: false,
-    isTranslucent: true,
-    isGlass: true
   }
 ];
 
@@ -238,7 +207,6 @@ export function applyTheme(theme) {
   root.dataset.theme = theme.isDarkTheme ? 'dark' : 'light';
   root.dataset.grid = theme.gridEnabled ? 'on' : 'off';
   root.dataset.translucent = theme.isTranslucent ? 'on' : 'off';
-  root.dataset.glass = theme.isGlass ? 'on' : 'off';
 }
 
 export function mergeThemes(...groups) {

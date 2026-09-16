@@ -1,6 +1,5 @@
 import { bindKeyboardShortcuts } from './keyboard-shortcuts.js';
 import { createEditorController } from './editor-controller.js';
-import { initLiquidGlassFilter } from './liquid-glass.js';
 import { createNavigation } from './navigation.js';
 import { createNotesController } from './notes-controller.js';
 import { createSettingsUi } from './settings-ui.js';
@@ -30,8 +29,6 @@ const updateBtn = document.getElementById('update-btn');
 const updateVersion = document.getElementById('update-version');
 
 window.addEventListener('DOMContentLoaded', async () => {
-  initLiquidGlassFilter(document.getElementById('window'));
-
   const status = createStatusController(appStatus);
   const editor = createEditorController({
     mount: editorMount,
