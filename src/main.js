@@ -2,6 +2,7 @@ import { bindKeyboardShortcuts } from './keyboard-shortcuts.js';
 import { createEditorController } from './editor-controller.js';
 import { createNavigation } from './navigation.js';
 import { createNotesController } from './notes-controller.js';
+import { createPinController } from './pin-controller.js';
 import { createSettingsUi } from './settings-ui.js';
 import { createStatusController } from './status-ui.js';
 import { createThemeUi } from './theme-ui.js';
@@ -27,6 +28,9 @@ const dropdownPanel = document.getElementById('theme-dropdown-panel');
 const dropdownLabel = document.getElementById('theme-dropdown-label');
 const updateBtn = document.getElementById('update-btn');
 const updateVersion = document.getElementById('update-version');
+const pinSection = document.getElementById('pin-section');
+const pinSwitch = document.getElementById('pin-switch');
+const pinButton = document.getElementById('btn-pin');
 
 window.addEventListener('DOMContentLoaded', async () => {
   const status = createStatusController(appStatus);
@@ -66,6 +70,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     invoke,
     Channel
   });
+  const pin = createPinController({
+    invoke,
+    pinButton,
+    pinSection,
+    pinSwitch
+  });
   const windowControls = createWindowControls({
     appWindow,
     closeButton: document.getElementById('btn-close'),
@@ -83,6 +93,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   settings.bind();
   navigation.bindWheel();
   updater.bind();
+  pin.bind();
   windowControls.bind();
   bindKeyboardShortcuts({
     document,
@@ -93,7 +104,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 
   try {
-    await Promise.all([themeUi.init(), notes.init()]);
+    await Promise.all([themeUi.init(), notes.init(), pin.init()]);
   } catch (error) {
     console.error('Startup failed:', error);
     status.show('Could not load notes');

@@ -24,6 +24,11 @@
           </svg>
         </button>
         <div id="window-controls">
+          <button id="btn-pin" title="Unpin from top" aria-label="Unpin from top" aria-pressed="false" hidden>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 17v5M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
           <button id="btn-minimize" title="Minimize">
             <svg width="10" height="1" viewBox="0 0 10 1"><rect width="10" height="1" rx="0.5" fill="currentColor"/></svg>
           </button>
@@ -63,6 +68,14 @@
               <button id="btn-import-theme">Import Theme</button>
             </div>
             <input id="theme-file-input" type="file" accept=".json,application/json"hidden />
+          </div>
+          <div class="settings-section" id="pin-section" hidden>
+            <div class="settings-section-row">
+              <h3 class="settings-section-title">Pin on Top</h3>
+              <button class="switch" id="pin-switch" role="switch" aria-checked="false" aria-label="Keep noted above other windows">
+                <span class="switch-thumb" aria-hidden="true"></span>
+              </button>
+            </div>
           </div>
           <div class="settings-section">
             <button class="shortcut-section-trigger" id="shortcut-trigger" aria-expanded="false">

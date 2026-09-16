@@ -202,6 +202,35 @@ fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
 }
 
+#[tauri::command]
+fn set_pinned(window: tauri::WebviewWindow, pinned: bool) -> Result<(), String> {
+    window
+        .set_always_on_top(pinned)
+        .map_err(|error| error.to_string())
+}
+
+// Always-on-top is only a real toggle where the platform honors it: Windows
+// (WS_EX_TOPMOST) and X11 (EWMH _NET_WM_STATE_ABOVE). On Wayland it is a silent
+// no-op, so the UI stays hidden there and the title bar right-click menu is used
+// instead. The frontend calls this once to decide whether to show the control.
+#[tauri::command]
+fn pin_supported() -> bool {
+    #[cfg(target_os = "windows")]
+    let supported = true;
+    #[cfg(target_os = "linux")]
+    let supported = {
+        use gtk::prelude::*;
+
+        gtk::gdk::Display::default()
+            .map(|display| display.type_().name().contains("X11"))
+            .unwrap_or(false)
+    };
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    let supported = false;
+
+    supported
+}
+
 fn save_theme_json(themes_dir: &PathBuf, name: &str, json: &str) -> Result<(), String> {
     validate_theme_payload(&name, &json)?;
     fs::create_dir_all(themes_dir).map_err(|e| e.to_string())?;
@@ -461,7 +490,9 @@ pub fn run() {
             get_app_version,
             list_theme_files,
             save_theme_file,
-            quit_app
+            quit_app,
+            set_pinned,
+            pin_supported
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
