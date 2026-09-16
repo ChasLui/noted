@@ -11,6 +11,8 @@ export function createSettingsUi({
     settingsPanel.classList.toggle('hidden', !shouldOpen);
     settingsPanel.setAttribute('aria-hidden', String(!shouldOpen));
     settingsButton.classList.toggle('open', shouldOpen);
+    settingsButton.title = shouldOpen ? 'Back' : 'Settings';
+    settingsButton.setAttribute('aria-label', shouldOpen ? 'Back' : 'Settings');
     document.documentElement.dataset.settings = shouldOpen ? 'open' : '';
   }
 

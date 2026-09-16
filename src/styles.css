@@ -385,13 +385,30 @@ body {
     pointer-events: auto;
 }
 
+#btn-settings .icon-back {
+    display: none;
+}
+
+#btn-settings.open .icon-menu {
+    display: none;
+}
+
+#btn-settings.open .icon-back {
+    display: block;
+}
+
 #btn-settings:hover {
     transform: translateY(-50%) scale(1.1);
 }
 
 #btn-settings.open {
-    color: var(--accent-primary);
-    background: var(--accent-primary-soft);
+    color: var(--text-primary);
+    background: transparent;
+}
+
+#btn-settings.open:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
 }
 
 #btn-close:hover {
@@ -739,6 +756,45 @@ body {
     flex: 1;
     overflow-y: auto;
     min-height: 0;
+    margin-right: -16px;
+    padding-right: 16px;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+    scrollbar-color: transparent transparent;
+}
+
+.settings-scroll:hover,
+.settings-scroll:focus-within {
+    scrollbar-color: var(--surface-scrollbar) transparent;
+}
+
+.settings-scroll::-webkit-scrollbar {
+    width: 10px;
+}
+
+.settings-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 4px 0;
+}
+
+.settings-scroll::-webkit-scrollbar-thumb {
+    background: transparent;
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 999px;
+}
+
+.settings-scroll:hover::-webkit-scrollbar-thumb {
+    background: var(--surface-scrollbar);
+    border: 3px solid transparent;
+    background-clip: content-box;
+}
+
+.settings-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--surface-scrollbar-hover);
+    border: 3px solid transparent;
+    background-clip: content-box;
 }
 
 :root[data-settings="open"] #canvas-container,
