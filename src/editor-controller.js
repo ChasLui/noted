@@ -15,26 +15,33 @@ export function createEditorController({
   let currentDocumentKey = null;
   let isDisabled = disabled;
 
-  const extensions = [
-    history(),
-    keymap.of([
-      ...defaultKeymap
-    ]),
-    EditorView.lineWrapping,
-    placeholder('Start typing...'),
-    editableCompartment.of(EditorView.editable.of(!isDisabled)),
-    readOnlyCompartment.of(EditorState.readOnly.of(isDisabled)),
-    EditorView.updateListener.of((update) => {
-      if (!update.docChanged) return;
-      for (const callback of callbacks) callback(update);
-    }),
-    createEditorFeatureExtensions()
-  ];
+  function baseExtensions() {
+    return [
+      history(),
+      keymap.of([
+        ...defaultKeymap
+      ]),
+      EditorView.lineWrapping,
+      placeholder('Start typing...'),
+      editableCompartment.of(EditorView.editable.of(!isDisabled)),
+      readOnlyCompartment.of(EditorState.readOnly.of(isDisabled)),
+      EditorView.updateListener.of((update) => {
+        if (!update.docChanged) return;
+        for (const callback of callbacks) callback(update);
+      }),
+      createEditorFeatureExtensions()
+    ];
+  }
+
+  const extensions = baseExtensions();
 
   function createState(doc) {
+    // Fresh compartment defaults must reflect the CURRENT disabled flag:
+    // view.setState() installs these defaults verbatim, so a stale default
+    // would leave a new note read-only with no later fixup.
     return EditorState.create({
       doc,
-      extensions
+      extensions: isDisabled ? extensions : baseExtensions()
     });
   }
 
@@ -42,6 +49,7 @@ export function createEditorController({
     state: createState(initialValue),
     parent: mount
   });
+  mount.classList.toggle('is-disabled', isDisabled);
 
   function rememberCurrentState() {
     if (currentDocumentKey == null) return;
@@ -74,7 +82,9 @@ export function createEditorController({
   }
 
   function setDisabled(nextDisabled) {
-    isDisabled = Boolean(nextDisabled);
+    nextDisabled = Boolean(nextDisabled);
+    if (isDisabled === nextDisabled) return;
+    isDisabled = nextDisabled;
     mount.classList.toggle('is-disabled', isDisabled);
     view.dispatch({
       effects: [
