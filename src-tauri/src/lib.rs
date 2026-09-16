@@ -324,6 +324,78 @@ fn register_xfce_global_hotkey() {
         .status();
 }
 
+// The window is frameless, so there is no native title bar to expose the
+// compositor's window menu. GTK shows that menu with `gdk_window_show_window_menu`
+// (see `gtk_window_do_popup` in GTK). The same call works from a custom title
+// bar: on Wayland it asks Mutter to pop up GNOME's menu, which carries "Always
+// on Top"; on X11 the WM handles it and GTK's fallback also offers it.
+#[cfg(target_os = "linux")]
+fn install_window_menu_gesture(window: &tauri::WebviewWindow) {
+    use gtk::prelude::*;
+
+    // Height of the custom title bar in `src/styles.css` (#titlebar). Right
+    // clicks below this strip stay with the editor.
+    const TITLEBAR_STRIP_HEIGHT: f64 = 36.0;
+
+    let Ok(gtk_window) = window.gtk_window() else {
+        return;
+    };
+
+    // Attach to the webview itself. It fills the window and is the target of
+    // every click, so a capture-phase gesture there is guaranteed to run before
+    // WebKit handles the event. A gesture on an ancestor only runs if the event
+    // propagates up to it, which we cannot rely on with a webview child.
+    let webview = window.default_vbox().ok().and_then(|vbox| {
+        vbox.children()
+            .into_iter()
+            .find(|child| child.type_().name().contains("WebKitWebView"))
+    });
+    let Some(webview) = webview else {
+        #[cfg(debug_assertions)]
+        eprintln!("noted: window menu: no webview widget found");
+        return;
+    };
+
+    let gesture = gtk::GestureMultiPress::new(&webview);
+    gesture.set_button(3);
+    gesture.set_propagation_phase(gtk::PropagationPhase::Capture);
+    gesture.connect_pressed(move |gesture, _n_press, _x, y| {
+        #[cfg(debug_assertions)]
+        eprintln!("noted: titlebar right-click at y={y}");
+
+        if y >= TITLEBAR_STRIP_HEIGHT {
+            return;
+        }
+
+        // Mutter validates the seat serial against the active grab, so the call
+        // has to happen while the press is still live. The gesture hands us the
+        // real event and a valid serial.
+        let sequence = gesture.current_sequence();
+        let Some(mut event) = gesture.last_event(sequence.as_ref()) else {
+            return;
+        };
+        let Some(gdk_window) = gtk_window.window() else {
+            return;
+        };
+
+        if !gdk_window.show_window_menu(&mut event) {
+            eprintln!("Compositor does not support a window menu");
+        }
+
+        // Keep the webview from also acting on the right click.
+        gesture.set_state(gtk::EventSequenceState::Claimed);
+    });
+
+    // GTK3 connects a controller to its widget through weak pointers only: the
+    // widget does not own the controller. Dropping this local would destroy the
+    // gesture the moment this function returns, so keep it alive for the
+    // lifetime of the process.
+    std::mem::forget(gesture);
+
+    #[cfg(debug_assertions)]
+    eprintln!("noted: window menu gesture installed");
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default();
@@ -373,6 +445,11 @@ pub fn run() {
             app.manage(AppPaths { themes_dir });
             #[cfg(desktop)]
             register_global_hotkey();
+
+            #[cfg(target_os = "linux")]
+            if let Some(window) = app.get_webview_window("main") {
+                install_window_menu_gesture(&window);
+            }
 
             Ok(())
         })
