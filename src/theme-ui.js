@@ -25,7 +25,8 @@ export function createThemeUi({
     const preferredName = getActiveThemeName();
     activeTheme = themes.find((theme) => theme.name === preferredName) || themes[0];
     applyTheme(activeTheme);
-    renderThemeSelect();
+    dropdownLabel.textContent = activeTheme.name;
+    scheduleRenderThemeSelect();
 
     const warnings = getThemeLoadWarnings();
     if (warnings.length > 0) {
@@ -70,9 +71,23 @@ export function createThemeUi({
   }
 
   function toggleDropdown() {
+    if (!dropdownOpen && dropdownPanel.childElementCount === 0 && activeTheme) {
+      renderThemeSelect();
+    }
     dropdownOpen = !dropdownOpen;
     dropdownTrigger.setAttribute('aria-expanded', String(dropdownOpen));
     dropdownPanel.hidden = !dropdownOpen;
+  }
+
+  function scheduleRenderThemeSelect() {
+    const run = () => {
+      if (activeTheme) renderThemeSelect();
+    };
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(run, { timeout: 500 });
+    } else {
+      setTimeout(run, 0);
+    }
   }
 
   function renderThemeSelect() {

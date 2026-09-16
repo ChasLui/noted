@@ -93,8 +93,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 
   try {
-    await themeUi.init();
-    await notes.init();
+    await Promise.all([themeUi.init(), notes.init()]);
   } catch (error) {
     console.error('Startup failed:', error);
     status.show('Could not load notes');
