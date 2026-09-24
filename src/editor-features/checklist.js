@@ -16,14 +16,17 @@ function isCheckedLine(text) {
 }
 
 class ChecklistBoxWidget extends WidgetType {
-  constructor(lineFrom, checked) {
+  constructor(checked) {
     super();
-    this.lineFrom = lineFrom;
     this.checked = checked;
   }
 
   eq(other) {
-    return other.lineFrom === this.lineFrom && other.checked === this.checked;
+    // The button only renders the checked state, so reusing its DOM is safe as
+    // long as that state is unchanged. Absolute position is intentionally not
+    // part of the identity: edits above a line shift it and would otherwise
+    // force every checkbox below to rebuild.
+    return other.checked === this.checked;
   }
 
   toDOM(view) {
@@ -42,7 +45,10 @@ class ChecklistBoxWidget extends WidgetType {
     button.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
-      toggleChecklistLine(view, this.lineFrom);
+      // Resolve the line from the live DOM: the widget instance may be reused
+      // after edits shift its line, so a captured offset would go stale.
+      const pos = view.posAtDOM(button);
+      toggleChecklistLine(view, view.state.doc.lineAt(pos).from);
       view.focus();
     });
 
@@ -87,32 +93,48 @@ function buildChecklistDecorations(view) {
   const builder = new RangeSetBuilder();
   if (view.state.field(activeEditorModeField) !== 'list') return builder.finish();
 
-  const firstLine = view.state.doc.line(1);
-  const keywordStart = firstLine.from + firstLine.text.search(/\S/);
-  if (keywordStart >= firstLine.from) {
-    builder.add(
-      keywordStart,
-      keywordStart + 'list'.length,
-      Decoration.mark({ class: 'editor-mode-keyword editor-mode-keyword-list' })
-    );
-  }
+  const doc = view.state.doc;
+  let lastLine = 0;
 
-  for (let lineNumber = 2; lineNumber <= view.state.doc.lines; lineNumber++) {
-    const line = view.state.doc.line(lineNumber);
-    if (!isChecklistLine(line.text)) continue;
+  // Only decorate lines that are actually drawn. The viewport is re-decorated
+  // on scroll, so this stays correct while keeping the cost proportional to the
+  // visible lines instead of the whole document.
+  for (const { from, to } of view.visibleRanges) {
+    const first = doc.lineAt(from).number;
+    const last = doc.lineAt(to).number;
 
-    const checked = isCheckedLine(line.text);
-    builder.add(
-      line.from,
-      line.from,
-      Decoration.widget({
-        widget: new ChecklistBoxWidget(line.from, checked),
-        side: -1
-      })
-    );
+    for (let lineNumber = first; lineNumber <= last; lineNumber++) {
+      if (lineNumber <= lastLine) continue;
+      lastLine = lineNumber;
+      const line = doc.line(lineNumber);
 
-    if (checked) {
-      builder.add(line.from, line.to, Decoration.mark({ class: 'checklist-line-checked' }));
+      if (lineNumber === 1) {
+        const keywordStart = line.from + line.text.search(/\S/);
+        if (keywordStart >= line.from) {
+          builder.add(
+            keywordStart,
+            keywordStart + 'list'.length,
+            Decoration.mark({ class: 'editor-mode-keyword editor-mode-keyword-list' })
+          );
+        }
+        continue;
+      }
+
+      if (!isChecklistLine(line.text)) continue;
+
+      const checked = isCheckedLine(line.text);
+      builder.add(
+        line.from,
+        line.from,
+        Decoration.widget({
+          widget: new ChecklistBoxWidget(checked),
+          side: -1
+        })
+      );
+
+      if (checked) {
+        builder.add(line.from, line.to, Decoration.mark({ class: 'checklist-line-checked' }));
+      }
     }
   }
 
