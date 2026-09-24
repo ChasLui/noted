@@ -32,3 +32,8 @@ gtk = "0.18"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 tauri = { version = "2", features = ["macos-private-api"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
