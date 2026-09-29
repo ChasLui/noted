@@ -129,6 +129,7 @@ export function createEditorController({
     getCursorLine: () => view.state.doc.lineAt(view.state.selection.main.head).number,
     getMode: () => view.state.field(activeEditorModeField),
     getRootElement: () => mount,
+    getScrollerElement: () => view.scrollDOM,
     getSelection,
     getValue: () => view.state.doc.toString(),
     isFocused: () => view.hasFocus,

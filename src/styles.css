@@ -68,11 +68,25 @@
         var(--theme-type-main) 12%,
         transparent
     );
-    --surface-scrollbar-hover: color-mix(
+
+    --scrollbar-gutter: 12px;
+    --scrollbar-thumb-inset: 3px;
+    --scrollbar-thumb-quiet: color-mix(
         in srgb,
-        var(--theme-type-main) 22%,
+        var(--theme-type-main) 14%,
         transparent
     );
+    --scrollbar-thumb-visible: color-mix(
+        in srgb,
+        var(--theme-type-main) 26%,
+        transparent
+    );
+    --scrollbar-thumb-hover: color-mix(
+        in srgb,
+        var(--theme-type-main) 36%,
+        transparent
+    );
+    --scrollbar-thumb-active: var(--accent-primary);
 
     --text-primary: var(--theme-type-main);
     --text-secondary: var(--theme-type-subtle);
@@ -369,8 +383,8 @@ body {
     -webkit-text-size-adjust: 100%;
     -webkit-font-smoothing: antialiased;
     overflow-wrap: break-word;
-    scrollbar-color: var(--highlight-selection) transparent;
-    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+    --scrollbar-thumb-color: var(--scrollbar-thumb-quiet);
 }
 
 #note-editor .cm-content {
@@ -486,7 +500,8 @@ body {
 }
 
 #note-editor .cm-scroller::-webkit-scrollbar {
-    width: 8px;
+    width: var(--scrollbar-gutter);
+    height: var(--scrollbar-gutter);
 }
 
 #note-editor .cm-scroller::-webkit-scrollbar-track {
@@ -494,14 +509,20 @@ body {
 }
 
 #note-editor .cm-scroller::-webkit-scrollbar-thumb {
-    background: var(--highlight-selection);
-    border: 2px solid transparent;
+    background: var(--scrollbar-thumb-color);
+    border: var(--scrollbar-thumb-inset) solid transparent;
     border-radius: 999px;
     background-clip: content-box;
 }
 
-#note-editor .cm-scroller::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-primary);
+#note-editor .cm-scroller::-webkit-scrollbar-thumb:hover,
+#note-editor .cm-scroller.is-scrolling::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb-hover);
+    background-clip: content-box;
+}
+
+#note-editor .cm-scroller::-webkit-scrollbar-thumb:active {
+    background: var(--scrollbar-thumb-active);
     background-clip: content-box;
 }
 
@@ -640,18 +661,17 @@ body {
     margin-right: -16px;
     padding-right: 16px;
     overscroll-behavior: contain;
-    scrollbar-width: thin;
     scrollbar-gutter: stable;
-    scrollbar-color: transparent transparent;
+    --scrollbar-thumb-color: var(--scrollbar-thumb-visible);
 }
 
 .settings-scroll:hover,
 .settings-scroll:focus-within {
-    scrollbar-color: var(--surface-scrollbar) transparent;
+    --scrollbar-thumb-color: var(--scrollbar-thumb-hover);
 }
 
 .settings-scroll::-webkit-scrollbar {
-    width: 10px;
+    width: var(--scrollbar-gutter);
 }
 
 .settings-scroll::-webkit-scrollbar-track {
@@ -660,21 +680,19 @@ body {
 }
 
 .settings-scroll::-webkit-scrollbar-thumb {
-    background: transparent;
-    border: 3px solid transparent;
+    background: var(--scrollbar-thumb-color);
+    border: var(--scrollbar-thumb-inset) solid transparent;
     background-clip: content-box;
     border-radius: 999px;
 }
 
-.settings-scroll:hover::-webkit-scrollbar-thumb {
-    background: var(--surface-scrollbar);
-    border: 3px solid transparent;
+.settings-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
     background-clip: content-box;
 }
 
-.settings-scroll::-webkit-scrollbar-thumb:hover {
-    background: var(--surface-scrollbar-hover);
-    border: 3px solid transparent;
+.settings-scroll::-webkit-scrollbar-thumb:active {
+    background: var(--scrollbar-thumb-active);
     background-clip: content-box;
 }
 
@@ -844,8 +862,7 @@ body {
     max-height: 300px;
     overflow-y: auto;
     overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-muted) transparent;
+    --scrollbar-thumb-color: var(--scrollbar-thumb-visible);
     background: var(--surface-raised);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
@@ -859,7 +876,7 @@ body {
 }
 
 .theme-dropdown-panel::-webkit-scrollbar {
-    width: 5px;
+    width: 6px;
 }
 
 .theme-dropdown-panel::-webkit-scrollbar-track {
@@ -867,12 +884,12 @@ body {
 }
 
 .theme-dropdown-panel::-webkit-scrollbar-thumb {
-    background: var(--surface-scrollbar);
+    background: var(--scrollbar-thumb-color);
     border-radius: 999px;
 }
 
 .theme-dropdown-panel::-webkit-scrollbar-thumb:hover {
-    background: var(--surface-scrollbar-hover);
+    background: var(--scrollbar-thumb-hover);
 }
 
 @keyframes dropdown-in {

@@ -3,6 +3,7 @@ import { createEditorController } from './editor-controller.js';
 import { createNavigation } from './navigation.js';
 import { createNotesController } from './notes-controller.js';
 import { createPinController } from './pin-controller.js';
+import { createScrollAffordance } from './scroll-affordance.js';
 import { createSettingsUi } from './settings-ui.js';
 import { createStatusController } from './status-ui.js';
 import { createThemeUi } from './theme-ui.js';
@@ -85,6 +86,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     invoke,
     status
   });
+  const scrollAffordance = createScrollAffordance();
 
   editor.setDisabled(true);
   editor.onChange(notes.scheduleSave);
@@ -95,6 +97,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   updater.bind();
   pin.bind();
   windowControls.bind();
+  scrollAffordance.bind(editor.getScrollerElement());
   bindKeyboardShortcuts({
     document,
     editor,
